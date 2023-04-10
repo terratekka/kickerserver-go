@@ -3,7 +3,9 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"strconv"
 
 	"time"
 
@@ -12,8 +14,9 @@ import (
 )
 
 type Player struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 type Range struct {
@@ -24,6 +27,14 @@ type Range struct {
 type Availability struct {
 	PlayerId int `json:"playerId"`
 	Range    Range
+}
+
+type AvailabilityData struct {
+	PlayerId  int
+	StartHour int
+	StartMin  int
+	EndHour   int
+	EndMin    int
 }
 
 type AvailabilityResult struct {
@@ -115,8 +126,43 @@ func unique(intSlice []int) []int {
 }
 
 func getPossibaleAvailabilities(c *gin.Context) {
-	results := calculateAvailability(2)
+	numberOfPlayers, _ := strconv.Atoi(c.Query("number"))
+	results := calculateAvailability(numberOfPlayers)
 	c.IndentedJSON(http.StatusOK, results)
+}
+
+// postAlbums adds an album from JSON received in the request body.
+func createOrUpdatePlayer(c *gin.Context) {
+	var player Player
+	if err := c.BindJSON(&player); err != nil {
+		log.Println("createOrUpdatePlayer err=", err)
+		return
+	}
+	log.Println("createOrUpdatePlayer player=", player)
+	p, conains := playerMap[player.ID]
+	if conains {
+		p.Name = player.Name
+		p.Email = player.Email
+	} else {
+		players = append(players, player)
+		playerMap[player.ID] = player
+	}
+
+	c.IndentedJSON(http.StatusCreated, player)
+}
+
+func createAvailability(c *gin.Context) {
+	var av AvailabilityData
+	if err := c.BindJSON(&av); err != nil {
+		log.Println("Availability err=", err)
+		return
+	}
+	log.Println("createAvailability availability=", av)
+
+	availability := Availability{PlayerId: av.PlayerId, Range: Range{Start: todayHourMin(av.StartHour, av.StartMin), End: todayHourMin(av.EndHour, av.EndMin)}}
+	availableTimes = append(availableTimes, availability)
+
+	c.IndentedJSON(http.StatusCreated, availability)
 }
 
 // func getAlbumByID(c *gin.Context) {
@@ -151,5 +197,7 @@ func getPossibaleAvailabilities(c *gin.Context) {
 func main() {
 	router := gin.Default()
 	router.GET("/results", getPossibaleAvailabilities)
+	router.POST("/player", createOrUpdatePlayer)
+	router.POST("/availability", createAvailability)
 	router.Run("localhost:8080")
 }

@@ -42,6 +42,11 @@ type AvailabilityResult struct {
 	Range   Range
 }
 
+type PlayerData struct {
+	Player         Player         `json:"player"`
+	Availabilities []Availability `json:"availabilities"`
+}
+
 // albums slice to seed record album data.
 var players = []Player{
 	{ID: 1, Name: "user1"},
@@ -125,6 +130,28 @@ func unique(intSlice []int) []int {
 	return list
 }
 
+func login(c *gin.Context) {
+	var player Player
+	if err := c.BindJSON(&player); err != nil {
+		log.Println("createOrUpdatePlayer err=", err)
+		return
+	}
+	log.Println("login player=", player)
+	for _, p := range players {
+		if p.Name == player.Name {
+			avs := []Availability{}
+			for _, avt := range availableTimes {
+				if avt.PlayerId == p.ID {
+					avs = append(avs, avt)
+				}
+			}
+			c.IndentedJSON(http.StatusOK, &PlayerData{Player: p, Availabilities: avs})
+			return
+		}
+	}
+	c.IndentedJSON(http.StatusNotFound, "")
+}
+
 func getPossibaleAvailabilities(c *gin.Context) {
 	numberOfPlayers, _ := strconv.Atoi(c.Query("number"))
 	results := calculateAvailability(numberOfPlayers)
@@ -197,6 +224,7 @@ func createAvailability(c *gin.Context) {
 func main() {
 	router := gin.Default()
 	router.GET("/results", getPossibaleAvailabilities)
+	router.POST("/login", login)
 	router.POST("/player", createOrUpdatePlayer)
 	router.POST("/availability", createAvailability)
 	router.Run("localhost:8080")

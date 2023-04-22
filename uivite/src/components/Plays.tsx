@@ -8,19 +8,23 @@ import CardContent from '@mui/material/CardContent';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import DateObject from 'react-date-object';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 export default function Plays() {
-    const { player, setPlayer } = useContext(PlayerContext);
+    const { player } = useContext(PlayerContext);
     const [results, setResults] = useState<AvailabilityResult[]>();
+    const [numberOfPlayers, setNumberOfPlayers] = useState<string>("2");
+
     let resultKey = 0;
 
     useEffect(() => {
         //if (player?.id) {
-        fetch('/api/results?number=2')
+        fetch('/api/results?number=' + numberOfPlayers)
             .then(response => response.json())
             .then(data => { setResults(data) });
         //}
-    }, [])
+    }, [numberOfPlayers])
 
     function Play({ result }: any) {
         return (
@@ -42,15 +46,45 @@ export default function Plays() {
         );
     }
 
-    return (
-        <Box
-            component="span"
-            sx={{ display: 'flex', flexWrap: 'wrap', mx: '2px' }}>
-            {results?.map((result: AvailabilityResult) => (
-                <Play result={result} key={resultKey++} />
-            ))}
-        </Box>
+    const handleNumberOfPlayers = (
+        event: React.MouseEvent<HTMLElement>,
+        newNumberOfPlayers: string,
+    ) => {
+        event.preventDefault();
+        if (newNumberOfPlayers) {
+            setNumberOfPlayers(newNumberOfPlayers)
+        }
+    };
 
+    return (
+        <>
+            <Box
+                component="div"
+                sx={{ mx: 1, verticalAlign: "center" }}>
+                <Typography component="h3" color="text.secondary">
+                    Number of players
+                </Typography>
+                <ToggleButtonGroup value={numberOfPlayers} exclusive onChange={handleNumberOfPlayers} size="large">
+                    <ToggleButton value="2">
+                        {" 2 "}
+                    </ToggleButton>
+                    <ToggleButton value="3">
+                        {" 3 "}
+                    </ToggleButton>
+                    <ToggleButton value="4">
+                        {" 4 "}
+                    </ToggleButton>
+                </ToggleButtonGroup>
+            </Box>
+
+            <Box
+                component="div"
+                sx={{ display: 'flex', flexWrap: 'wrap', mx: '2px' }}>
+                {results?.map((result: AvailabilityResult) => (
+                    <Play result={result} key={resultKey++} />
+                ))}
+            </Box>
+        </>
 
     );
 

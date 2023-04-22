@@ -1,33 +1,27 @@
-import React from 'react';
 import {Nav, Navbar} from 'react-bootstrap';
-import {RouteProps} from 'react-router';
+import UserContext from './User';
+import { useContext, useEffect } from 'react';
+import PlayerContext from './Player';
 
-type AppNavbarState = {
-    isOpen: boolean
+export default function AppNavbar()  {
+    const {player} = useContext(PlayerContext)
+
+    useEffect(() => {
+        console.log('AppNavbar playerId=', player?.id)
+    }, [])
+
+    const toggle = () => {
+        // this.setState({
+        //     isOpen: !this.state.isOpen
+        // });
+    }
+
+    return (
+        <Navbar color="dark" className="navbar-dark bg-dark" expand="md">
+            <Nav>
+                <Nav.Link className ="navbar-brand" href="/">Home</Nav.Link>
+            </Nav>    
+        </Navbar>
+    );
+
 }
-
-class AppNavbar extends React.Component<{}, AppNavbarState>  {
-    constructor(props: any) {
-        super(props);
-        this.state = {isOpen: false};
-        this.toggle = this.toggle.bind(this);
-    }
-
-    toggle() {
-        this.setState({
-            isOpen: !this.state.isOpen
-        });
-    }
-
-    render() {
-        return (
-            <Navbar color="dark" className="navbar-dark bg-dark" expand="md">
-                <Nav>
-                    <Nav.Link className ="navbar-brand" href="/">Home</Nav.Link>
-                </Nav>    
-            </Navbar>
-        );
-    }
-}
-
-export default AppNavbar;

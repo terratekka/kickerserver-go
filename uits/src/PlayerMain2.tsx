@@ -7,14 +7,14 @@ import PlayerContext, { Player } from './Player';
 type Availability = {
 }
 
-export default function PlayerMain() {
+export default function PlayerMain2() {
     const navigate = useNavigate();
     const [availabilities, setAvailabilities] = useState<Availability>();
 
     const {player, setPlayer} = useContext(PlayerContext)
 
     useEffect(() => {
-        console.log('PlayerMain playerId=', player?.id)
+        console.log('PlayerMain2 playerId=', player?.id)
         if (player?.id) {
             fetch('/player/'+player.id)
                 .then(response => response.json())
@@ -75,7 +75,7 @@ export default function PlayerMain() {
         
     const navigateOtherMain = (event: any) => {
         event.preventDefault();
-        navigate('/main2')
+        navigate('/main')
     }
 
     const render = () => {

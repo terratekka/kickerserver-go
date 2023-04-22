@@ -1,7 +1,7 @@
 import { createContext } from "react";
 
 export interface Player {
-    id : number,
+    id: number,
     name?: string
     email?: string
 }
@@ -15,10 +15,10 @@ export const defaultPlayer: Player = { id: 0 };
 
 export const playerReducer = (state: Player, player: Player) => {
     state.id = player.id
-    state.name = player.name;  
-    state.email = player.email;  
-    return {...state};
+    state.name = player.name;
+    state.email = player.email;
+    return { ...state };
 }
 
-const PlayerContext = createContext<PlayerState>({player: defaultPlayer});
+const PlayerContext = createContext<PlayerState>({ player: { id: 0 } });
 export default PlayerContext;

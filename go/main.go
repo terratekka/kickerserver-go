@@ -25,8 +25,9 @@ type Range struct {
 }
 
 type Availability struct {
-	PlayerId int `json:"playerId"`
-	Range    Range
+	ID       int   `json:"id"`
+	PlayerId int   `json:"playerId"`
+	Range    Range `json:"range"`
 }
 
 type AvailabilityData struct {
@@ -57,9 +58,11 @@ var players = []Player{
 var playerMap = makePlayerMap(players)
 
 var availableTimes = []Availability{
-	{PlayerId: 1, Range: Range{Start: todayHourMin(12, 0), End: todayHourMin(15, 0)}},
-	{PlayerId: 2, Range: Range{Start: todayHourMin(13, 0), End: todayHourMin(17, 0)}},
-	{PlayerId: 3, Range: Range{Start: todayHourMin(11, 0), End: todayHourMin(14, 0)}},
+	{ID: 11, PlayerId: 1, Range: Range{Start: todayHourMin(12, 30), End: todayHourMin(15, 30)}},
+	{ID: 12, PlayerId: 1, Range: Range{Start: todayHourMin(10, 00), End: todayHourMin(11, 00)}},
+	{ID: 13, PlayerId: 1, Range: Range{Start: todayHourMin(16, 15), End: todayHourMin(16, 45)}},
+	{ID: 2, PlayerId: 2, Range: Range{Start: todayHourMin(13, 0), End: todayHourMin(17, 0)}},
+	{ID: 3, PlayerId: 3, Range: Range{Start: todayHourMin(11, 0), End: todayHourMin(14, 0)}},
 }
 
 func makePlayerMap([]Player) map[int]Player {
@@ -141,7 +144,7 @@ func login(c *gin.Context) {
 	for _, p := range players {
 		if p.Name == player.Name {
 			p = playerMap[p.ID]
-			c.IndentedJSON(http.StatusOK, &PlayerData{Player: p, Availabilities: getPalyerAvailabilities(p)})
+			c.IndentedJSON(http.StatusOK, &PlayerData{Player: p, Availabilities: getPalyerAvailabilities(p.ID)})
 			return
 		}
 	}
@@ -153,17 +156,17 @@ func getPlayer(c *gin.Context) {
 	for _, p := range players {
 		if p.ID == id {
 			p = playerMap[p.ID]
-			c.IndentedJSON(http.StatusOK, &PlayerData{Player: p, Availabilities: getPalyerAvailabilities(p)})
+			c.IndentedJSON(http.StatusOK, &PlayerData{Player: p, Availabilities: getPalyerAvailabilities(p.ID)})
 			return
 		}
 	}
 	c.IndentedJSON(http.StatusNotFound, "")
 }
 
-func getPalyerAvailabilities(p Player) []Availability {
+func getPalyerAvailabilities(playerId int) []Availability {
 	avs := []Availability{}
 	for _, avt := range availableTimes {
-		if avt.PlayerId == p.ID {
+		if avt.PlayerId == playerId {
 			avs = append(avs, avt)
 		}
 	}
@@ -196,21 +199,44 @@ func createOrUpdatePlayer(c *gin.Context) {
 		log.Println("createOrUpdatePlayer playerMap[player.ID]=", playerMap[player.ID])
 	}
 
-	c.IndentedJSON(http.StatusCreated, &PlayerData{Player: player, Availabilities: getPalyerAvailabilities(player)})
+	c.IndentedJSON(http.StatusCreated, &PlayerData{Player: player, Availabilities: getPalyerAvailabilities(player.ID)})
 }
 
-func createAvailability(c *gin.Context) {
-	var av AvailabilityData
+func createOrUpdateAvailability(c *gin.Context) {
+	var av Availability
 	if err := c.BindJSON(&av); err != nil {
-		log.Println("Availability err=", err)
+		log.Println("createOrUpdateAvailability err=", err)
 		return
 	}
-	log.Println("createAvailability availability=", av)
-
-	availability := Availability{PlayerId: av.PlayerId, Range: Range{Start: todayHourMin(av.StartHour, av.StartMin), End: todayHourMin(av.EndHour, av.EndMin)}}
-	availableTimes = append(availableTimes, availability)
-
-	c.IndentedJSON(http.StatusCreated, availability)
+	log.Println("createOrUpdateAvailability av=", av)
+	_, conains := playerMap[av.PlayerId]
+	if conains {
+		if av.ID > 0 {
+			for idx, avt := range availableTimes {
+				if avt.ID == av.ID {
+					availableTimes[idx] = av
+					log.Println("createOrUpdateAvailability update=", availableTimes[idx])
+				}
+			}
+		} else {
+			availableTimes = append(availableTimes, av)
+			log.Println("createOrUpdateAvailability create=", av)
+		}
+		c.IndentedJSON(http.StatusOK, getPalyerAvailabilities(av.PlayerId))
+	} else {
+		c.IndentedJSON(http.StatusNotFound, "")
+	}
+}
+func deleteAvailability(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	for idx, av := range availableTimes {
+		if av.ID == id {
+			availableTimes = append(availableTimes[:idx], availableTimes[idx+1:]...)
+			c.IndentedJSON(http.StatusOK, getPalyerAvailabilities(av.PlayerId))
+			return
+		}
+	}
+	c.IndentedJSON(http.StatusNotFound, "")
 }
 
 // func getAlbumByID(c *gin.Context) {
@@ -248,6 +274,7 @@ func main() {
 	router.POST("/login", login)
 	router.GET("/player/:id", getPlayer)
 	router.POST("/player", createOrUpdatePlayer)
-	router.POST("/availability", createAvailability)
+	router.POST("/availability", createOrUpdateAvailability)
+	router.DELETE("/availability/:id", deleteAvailability)
 	router.Run("localhost:8080")
 }

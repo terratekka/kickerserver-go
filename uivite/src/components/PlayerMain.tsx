@@ -1,15 +1,12 @@
-import { useContext, useEffect, useReducer, useState } from 'react';
+import { useContext, useEffect, useState, useCallback } from 'react';
 //import { Container, Form, FormControl, FormGroup, FormLabel } from 'react-bootstrap';
 import Button from '@mui/material/Button';
-import { useNavigate } from 'react-router-dom';
 
 import PlayerContext, { Player } from './Player';
-import { Container, FormControl, FormGroup, FormLabel, Input, InputAdornment, InputLabel, TextField, Box, IconButton } from '@mui/material';
+import { Container, FormControl, FormGroup, FormLabel, Input, InputAdornment, TextField, Box, IconButton } from '@mui/material';
 import { Form } from 'react-bootstrap';
 import { AccountCircle } from '@mui/icons-material';
 import { Availability } from './Availability';
-import * as React from 'react';
-import { DataGrid, GridColDef, GridValueGetterParams } from '@mui/x-data-grid';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -23,7 +20,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import AvailabilityDialog from './AvailabilityDialog';
 
 export default function PlayerMain() {
-    const navigate = useNavigate();
     const [availabilities, setAvailabilities] = useState<Availability[]>();
     const { player, setPlayer } = useContext(PlayerContext);
     const [isOpen, setIsOpen] = useState(false);
@@ -32,11 +28,11 @@ export default function PlayerMain() {
     useEffect(() => {
         console.log('PlayerMain playerId=', player?.id)
         if (player?.id) {
-            fetch('/player/' + player.id)
+            fetch('/api/player/' + player.id)
                 .then(response => response.json())
                 .then(data => { console.log('useEffect=', data.player); setPlayer(data.player); setAvailabilities(data.availabilities) });
         }
-    }, [])
+    }, [player.id, setPlayer])
 
     const setPlayerState = (p: Player) => {
         if (p) {
@@ -165,7 +161,7 @@ export default function PlayerMain() {
     }
 
     const render = () => {
-        if (player?.id) {
+        if (player?.id && availabilities) {
             return (
                 <div>
                     <Box sx={{ margin: '1rem' }}>

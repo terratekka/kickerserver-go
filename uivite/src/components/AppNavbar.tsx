@@ -18,6 +18,10 @@ export default function AppNavbar() {
         event.preventDefault();
         navigate('/')
     }
+    const navigatePlays = (event: any) => {
+        event.preventDefault();
+        navigate('plays')
+    }
 
 
     return (
@@ -35,15 +39,16 @@ export default function AppNavbar() {
                     </IconButton>
                     <Button
                         color="inherit"
-                        sx={{ mr: 2 }}
                         onClick={navigateHome}
                     >
                         Home
                     </Button>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, alignItems: 'center' }}>
-                        {player.name}
+                    <Button color="inherit" onClick={navigatePlays}>Plays</Button>
+                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                     </Typography>
-                    <Button color="inherit">Login</Button>
+                    <Typography variant="h6" component="div" sx={{ flexGrow: 0 }}>
+                        {player.id ? player.name : "Login"}
+                    </Typography>
                 </Toolbar>
             </AppBar>
         </Box>
